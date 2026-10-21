@@ -1,12 +1,16 @@
 package com.booking_system.ticketbooking.service;
 
+import com.booking_system.ticketbooking.dto.BookingResponse;
 import com.booking_system.ticketbooking.dto.CreateBookingRequest;
 import com.booking_system.ticketbooking.entity.*;
 import com.booking_system.ticketbooking.exception.*;
 import com.booking_system.ticketbooking.repository.BookingRepository;
+import com.booking_system.ticketbooking.repository.BookingSummaryProjection;
 import com.booking_system.ticketbooking.repository.EventSeatRepository;
 import com.booking_system.ticketbooking.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -45,8 +49,10 @@ public class BookingService {
         booking.setCreatedAt(LocalDateTime.now());
         booking.setEventSeat(eventSeat);
 
-        bookingRepository.save(booking);
-        return booking;
+        Booking savedBooking = bookingRepository.save(booking);
+        System.out.println("ID before save: " + booking.getBookingId());
+        System.out.println("ID after save: " + savedBooking.getBookingId());
+        return savedBooking;
     }
 
     @Transactional
@@ -65,4 +71,21 @@ public class BookingService {
             throw new SeatReleaseException("Seat cannot be released");
         }
     }
+    private BookingResponse toBookingResponse(BookingSummaryProjection summary){
+        return new BookingResponse(
+                summary.getBookingId(),
+                summary.getBookingStatus(),
+                summary.getCreatedAt(),
+                summary.getEventId(),
+                summary.getSeatId(),
+                summary.getEventName(),
+                summary.getSeatNumber(),
+                summary.getAmount()
+        );
+    }
+    public Page<BookingResponse> fetchBookingByUser(Long userId, Pageable pageable){
+        Page<BookingSummaryProjection> summaries = bookingRepository.findBookingSummariesByUserId(userId,pageable);
+        return summaries.map(this::toBookingResponse);
+    }
+
 }

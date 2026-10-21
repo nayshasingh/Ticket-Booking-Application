@@ -2,9 +2,12 @@ package com.booking_system.ticketbooking.controller;
 
 import com.booking_system.ticketbooking.dto.CreatePaymentRequest;
 import com.booking_system.ticketbooking.dto.PaymentGatewayCallbackRequest;
+import com.booking_system.ticketbooking.dto.PaymentResponse;
 import com.booking_system.ticketbooking.entity.Payment;
 import com.booking_system.ticketbooking.service.PaymentService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,8 +23,17 @@ public class PaymentController {
     }
 
     @PostMapping
-    public Payment createPayment(@RequestBody @Valid CreatePaymentRequest createPaymentRequest){
-        return paymentService.createPayment(createPaymentRequest);
+    public ResponseEntity<PaymentResponse> createPayment(@RequestBody @Valid CreatePaymentRequest createPaymentRequest){
+        Payment payment = paymentService.createPayment(createPaymentRequest);
+        PaymentResponse paymentResponse = new PaymentResponse();
+        paymentResponse.setPaymentId(payment.getPaymentId());
+        paymentResponse.setBookingId(payment.getBooking().getBookingId());
+        paymentResponse.setAmount(payment.getAmount());
+        paymentResponse.setCreatedAt(payment.getCreatedAt());
+        paymentResponse.setPaymentMethod(payment.getPaymentMethod());
+        paymentResponse.setPaymentReference(payment.getPaymentReference());
+        paymentResponse.setPaymentStatus(payment.getPaymentStatus());
+        return ResponseEntity.status(HttpStatus.CREATED).body(paymentResponse);
     }
 
     @PostMapping("/callback")
